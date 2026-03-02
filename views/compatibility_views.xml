@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_brand_list" model="ir.ui.view">
+        <field name="name">product.brand.list</field>
+        <field name="model">product.brand</field>
+        <field name="arch" type="xml">
+            <list string="Brands" editable="bottom">
+                <field name="name" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_product_connection_list" model="ir.ui.view">
+        <field name="name">product.connection.list</field>
+        <field name="model">product.connection</field>
+        <field name="arch" type="xml">
+            <list string="Connections" editable="bottom">
+                <field name="name" />
+                <field name="brand_id" />
+            </list>
+        </field>
+    </record>
+
+    <record id="action_product_brand" model="ir.actions.act_window">
+        <field name="name">Brands</field>
+        <field name="res_model">product.brand</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_product_connection" model="ir.actions.act_window">
+        <field name="name">Connections</field>
+        <field name="res_model">product.connection</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_product_brand"
+        name="Brands"
+        parent="stock.menu_stock_inventory_control"
+        action="action_product_brand"
+        sequence="110" />
+
+    <menuitem id="menu_product_connection"
+        name="Connections"
+        parent="stock.menu_stock_inventory_control"
+        action="action_product_connection"
+        sequence="120" />
+
+</odoo>

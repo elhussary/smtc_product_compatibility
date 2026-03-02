@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit from website_sale.products directly so filters always show,
+         regardless of whether product attributes exist -->
+    <template id="products_attributes_compatibility" inherit_id="website_sale.products">
+        <xpath expr="//div[contains(@t-attf-class, 'products_attributes_filters')]"
+            position="inside">
+            <div id="compatibility_filters_wrapper"
+                class="position-relative mb-2 mt-2">
+
+                <t t-if="all_brands">
+                    <div class="nav-item mb-3">
+                        <h6 class="mb-1">
+                            <b>Brands</b>
+                        </h6>
+
+                        <select name="brand_id"
+                            class="form-select form-select-sm compatibility_filter">
+                            <option value="">All Brands</option>
+                            <t t-foreach="all_brands" t-as="brand">
+                                <option t-att-value="brand.id"
+                                    t-att-selected="'selected' if brand.id in selected_brand_ids else None">
+                                    <t t-esc="brand.name" />
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+                </t>
+
+                <t t-if="all_connections">
+                    <div class="nav-item mb-3">
+                        <h6 class="mb-1">
+                            <b>Connections</b>
+                        </h6>
+
+                        <select name="connection_id"
+                            class="form-select form-select-sm compatibility_filter">
+                            <option value="">All Connections</option>
+                            <t t-foreach="all_connections" t-as="connection">
+                                <t t-set="show_connection"
+                                    t-value="not selected_brand_ids or connection.brand_id.id in selected_brand_ids" />
+                                <option t-if="show_connection"
+                                    t-att-value="connection.id"
+                                    t-att-selected="'selected' if connection.id in selected_connection_ids else None">
+                                    <t t-esc="connection.name" /> (<t
+                                        t-esc="connection.brand_id.name" />) </option>
+                            </t>
+                        </select>
+                    </div>
+                </t>
+
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Override product name in Shop Grid to show selected Brand + Connection -->
+    <template id="shop_product_compatibility_name" inherit_id="website_sale.products_item">
+        <xpath
+            expr="//h2[contains(@class, 'o_wsale_products_item_title')]//a/span[@t-field='product.name']"
+            position="replace">
+            <!-- Build dynamic product name based on sidebar filter selection -->
+            <t t-set="compat_brand" t-value="selected_brands[:1] if selected_brands else False" />
+            <t t-set="compat_conn"
+                t-value="selected_connections[:1] if selected_connections else False" />
+            <t t-set="display_name" t-value="product.name" />
+            <t t-if="compat_brand or compat_conn">
+                <t t-set="suffix" t-value="''" />
+                <t t-if="compat_conn">
+                    <t t-set="suffix" t-value="compat_conn[0].name" />
+                </t>
+                <t t-if="compat_brand">
+                    <t t-set="suffix"
+                        t-value="compat_brand[0].name + (' ' + suffix if suffix else '')" />
+                </t>
+                <t t-set="display_name" t-value="product.name + ' for ' + suffix" />
+            </t>
+            <span t-esc="display_name" />
+        </xpath>
+    </template>
+
+    <!-- Override product title on product detail page -->
+    <template id="product_title_compatibility" inherit_id="website_sale.product_title">
+        <xpath expr="//h1[@t-field='product.name']" position="replace">
+            <t t-set="compat_brand" t-value="selected_brands[:1] if selected_brands else False" />
+            <t t-set="compat_conn"
+                t-value="selected_connections[:1] if selected_connections else False" />
+            <t t-set="title_name" t-value="product.name" />
+            <t t-if="compat_brand or compat_conn">
+                <t t-set="suffix" t-value="''" />
+                <t t-if="compat_conn">
+                    <t t-set="suffix" t-value="compat_conn[0].name" />
+                </t>
+                <t t-if="compat_brand">
+                    <t t-set="suffix"
+                        t-value="compat_brand[0].name + (' ' + suffix if suffix else '')" />
+                </t>
+                <t t-set="title_name" t-value="product.name + ' for ' + suffix" />
+            </t>
+            <h1
+                t-attf-class="h3 {{'mb-3' if not product.description_ecommerce and not is_view_active('website_sale.product_comment') else ''}}">
+                <span t-esc="title_name" />
+            </h1>
+        </xpath>
+    </template>
+
+    <!-- Show filtered Compatibility section on product detail page -->
+    <template id="product_compatibility_ecommerce" inherit_id="website_sale.product">
+        <xpath expr="//div[@id='product_details']" position="inside">
+
+            <t t-if="product.compatible_brand_ids">
+                <!-- Filter brands: show only selected ones, or all if none selected -->
+                <t t-set="display_brands"
+                    t-value="product.compatible_brand_ids.filtered(lambda b: b.id in selected_brand_ids) if selected_brand_ids else product.compatible_brand_ids" />
+                <!-- Filter connections: show only selected ones, or all if none selected -->
+                <t t-set="display_connections"
+                    t-value="product.compatible_connection_ids.filtered(lambda c: c.id in selected_connection_ids) if selected_connection_ids else product.compatible_connection_ids" />
+
+                <div class="mt-4 p-3 bg-light rounded" t-if="display_brands">
+                    <h5 class="mb-2">Compatibility</h5>
+
+                    <strong>Brands:</strong>
+                    <ul class="list-inline mb-2">
+                        <t t-foreach="display_brands" t-as="brand">
+                            <li class="list-inline-item badge rounded-pill text-bg-primary">
+                                <t t-esc="brand.name" />
+                            </li>
+                        </t>
+                    </ul>
+
+                    <t t-if="display_connections">
+                        <strong>Connections:</strong>
+                        <ul class="list-inline mb-0">
+                            <t t-foreach="display_connections" t-as="connection">
+                                <li class="list-inline-item badge rounded-pill text-bg-secondary">
+                                    <t t-esc="connection.name" />
+                                    <small>(<t t-esc="connection.brand_id.name" />)</small>
+                                </li>
+                            </t>
+                        </ul>
+                    </t>
+                </div>
+            </t>
+
+        </xpath>
+    </template>
+
+</odoo>
