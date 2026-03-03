@@ -6,7 +6,6 @@
         <xpath
             expr="//h2[contains(@class, 'o_wsale_products_item_title')]//a/span[@t-field='product.name']"
             position="replace">
-            <!-- Build dynamic product name based on sidebar filter selection -->
             <t t-set="compat_brand" t-value="selected_brands[:1] if selected_brands else False" />
             <t t-set="compat_conn"
                 t-value="selected_connections[:1] if selected_connections else False" />
@@ -51,45 +50,112 @@
         </xpath>
     </template>
 
-    <!-- Show filtered Compatibility section on product detail page -->
-    <template id="product_compatibility_ecommerce" inherit_id="website_sale.product">
-        <xpath expr="//div[@id='product_details']" position="inside">
+    <!-- Override Specifications Table to filter Brand/Connection and add Reference row -->
+    <template id="specs_table_filtered" inherit_id="website_sale_comparison.specifications_table">
+        <xpath expr="//table" position="replace">
+            <t t-set="display_brands"
+                t-value="product.compatible_brand_ids.filtered(lambda b: b.id in selected_brand_ids) if selected_brand_ids else product.compatible_brand_ids" />
+            <t t-set="display_connections"
+                t-value="product.compatible_connection_ids.filtered(lambda c: c.id in selected_connection_ids) if selected_connection_ids else product.compatible_connection_ids" />
 
-            <t t-if="product.compatible_brand_ids">
-                <!-- Filter brands: show only selected ones, or all if none selected -->
-                <t t-set="display_brands"
-                    t-value="product.compatible_brand_ids.filtered(lambda b: b.id in selected_brand_ids) if selected_brand_ids else product.compatible_brand_ids" />
-                <!-- Filter connections: show only selected ones, or all if none selected -->
-                <t t-set="display_connections"
-                    t-value="product.compatible_connection_ids.filtered(lambda c: c.id in selected_connection_ids) if selected_connection_ids else product.compatible_connection_ids" />
+            <table t-attf-class="table {{is_accordion and 'table-sm mb-0'}}">
+                <t t-if="len(attrib_categories) &gt; 1 and not is_accordion">
+                    <tr>
+                        <th class="text-start" colspan="2">
+                            <span t-if="category" t-field="category.name" />
+                            <span t-else="">Others</span>
+                        </th>
+                    </tr>
+                </t>
 
-                <div class="mt-4 p-3 bg-light rounded" t-if="display_brands">
-                    <h5 class="mb-2">Compatibility</h5>
-
-                    <strong>Brands:</strong>
-                    <ul class="list-inline mb-2">
-                        <t t-foreach="display_brands" t-as="brand">
-                            <li class="list-inline-item badge rounded-pill text-bg-primary">
-                                <t t-esc="brand.name" />
-                            </li>
-                        </t>
-                    </ul>
-
-                    <t t-if="display_connections">
-                        <strong>Connections:</strong>
-                        <ul class="list-inline mb-0">
-                            <t t-foreach="display_connections" t-as="connection">
-                                <li class="list-inline-item badge rounded-pill text-bg-secondary">
-                                    <t t-esc="connection.name" />
-                                    <small>(<t t-esc="connection.brand_id.name" />)</small>
-                                </li>
+                <!-- Brand row -->
+                <t t-if="display_brands">
+                    <tr>
+                        <td class="w-25 ps-0">Compatibility</td>
+                        <td class="w-75 pe-0 text-muted text-end">
+                            <t t-foreach="display_brands" t-as="brand">
+                                <span t-esc="brand.name" />
+                                <t t-if="not brand_last">, </t>
                             </t>
-                        </ul>
-                    </t>
-                </div>
-            </t>
+                        </td>
+                    </tr>
+                </t>
 
+                <!-- Connection row -->
+                <t t-if="display_connections">
+                    <tr>
+                        <td class="w-25 ps-0">Connection</td>
+                        <td class="w-75 pe-0 text-muted text-end">
+                            <t t-foreach="display_connections" t-as="connection">
+                                <span t-esc="connection.name" /> (<span
+                                    t-esc="connection.brand_id.name" />)<t
+                                    t-if="not connection_last">, </t>
+                            </t>
+                        </td>
+                    </tr>
+                </t>
+
+                <!-- Reference row: Internal Ref / Brand Ref -->
+                <t
+                    t-if="product_variant and (product_variant.default_code or (display_brands and display_brands[:1].reference))">
+                    <tr>
+                        <td class="w-25 ps-0">Reference</td>
+                        <td id="spec_reference_value" class="w-75 pe-0 text-end fw-bold text-dark"
+                            t-att-data-brand-ref="display_brands[:1].reference if display_brands and display_brands[:1].reference else ''">
+                            <t t-if="product_variant.default_code"
+                                t-esc="product_variant.default_code" />
+                            <t
+                                t-if="product_variant.default_code and display_brands and display_brands[:1].reference">
+                                / </t>
+                            <t t-if="display_brands and display_brands[:1].reference"
+                                t-esc="display_brands[:1].reference" />
+                        </td>
+                    </tr>
+                </t>
+
+                <!-- Other attributes -->
+                <t
+                    t-foreach="attrib_categories[category].filtered(lambda l: len(l.value_ids) &gt; 1 and l.attribute_id.name not in ('Brand', 'Connection'))"
+                    t-as="ptal">
+                    <t t-set="hide_border_bottom_classes"
+                        t-value="'border-bottom-0' if ptal_last and is_accordion else ''" />
+                    <tr>
+                        <td t-attf-class="w-25 {{hide_border_bottom_classes}} ps-0">
+                            <span t-field="ptal.attribute_id.name" />
+                        </td>
+                        <td
+                            t-attf-class="w-75 {{hide_border_bottom_classes}} pe-0 text-muted text-end">
+                            <t t-foreach="ptal.value_ids" t-as="pav">
+                                <span t-field="pav.name" />
+                                <t t-if="not pav_last">, </t>
+                            </t>
+                        </td>
+                    </tr>
+                </t>
+
+                <!-- Other attributes -->
+                <t t-set="single_value_attributes"
+                    t-value="attrib_categories[category]._prepare_single_value_for_display()" />
+                <t t-foreach="single_value_attributes" t-as="attribute">
+                    <t t-if="attribute.name not in ('Brand', 'Connection')">
+                        <t t-set="hide_border_bottom_classes"
+                            t-value="'border-bottom-0' if attribute_last and is_accordion else ''" />
+                        <tr>
+                            <td t-attf-class="w-25 {{hide_border_bottom_classes}} ps-0">
+                                <span t-field="attribute.name" />
+                            </td>
+                            <td
+                                t-attf-class="w-75 {{hide_border_bottom_classes}} pe-0 text-muted text-end">
+                                <t t-foreach="single_value_attributes[attribute]" t-as="ptal">
+                                    <span
+                                        t-field="ptal.product_template_value_ids._only_active().name" />
+                                    <t t-if="not ptal_last">, </t>
+                                </t>
+                            </td>
+                        </tr>
+                    </t>
+                </t>
+            </table>
         </xpath>
     </template>
-
 </odoo>

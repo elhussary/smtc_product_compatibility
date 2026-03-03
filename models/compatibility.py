@@ -6,6 +6,7 @@ class ProductBrand(models.Model):
     _description = "Product Brand"
 
     name = fields.Char(string="Brand Name", required=True)
+    reference = fields.Char(string="Brand Reference")
 
 
 class ProductConnection(models.Model):
