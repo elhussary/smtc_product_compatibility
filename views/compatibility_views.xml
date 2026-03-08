@@ -7,13 +7,15 @@
         <field name="model">product.brand</field>
         <field name="arch" type="xml">
             <list string="Brands" editable="bottom">
+                <field name="sequence" widget="handle" />
+
                 <field name="name" />
                 <field name="reference" />
             </list>
         </field>
     </record>
 
-    <!-- LIST IEW CONN -->
+    <!-- LIST VIEW CONNECTION -->
     <record id="view_product_connection_list" model="ir.ui.view">
         <field name="name">product.connection.list</field>
         <field name="model">product.connection</field>
