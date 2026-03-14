@@ -1,7 +1,5 @@
 from odoo import http
-
 from odoo.http import request
-
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 
 
@@ -9,8 +7,14 @@ class WebsiteSaleCompatibility(WebsiteSale):
 
     def _get_selected_brand_connection(self):
         """Read brand/connection filter IDs from URL params."""
-
         brand_ids = [int(b) for b in request.httprequest.args.getlist("brand_id")]
+
+        # IF NO BRAND IS SELECTED, SELECT THE FIRST BRAND
+        if not brand_ids:
+            first_brand = request.env["product.brand"].search([], limit=1)
+            if first_brand:
+                brand_ids = [first_brand.id]
+
         connection_ids = [int(c) for c in request.httprequest.args.getlist("connection_id")]
         brands = request.env["product.brand"].browse(brand_ids).exists()
 

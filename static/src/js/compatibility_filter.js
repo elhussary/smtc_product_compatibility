@@ -34,12 +34,13 @@ export class CompatibilityFilter extends Interaction {
       url.searchParams.set("brand_id", brandSelect.value);
 
       if (changedElement.name === "brand_id") {
+        url.searchParams.delete("connection_id");
       } else if (connSelect && connSelect.value) {
         url.searchParams.set("connection_id", connSelect.value);
       }
     }
 
-    window.location = `${url.pathname}${url.search ? url.search : ""}${url.hash}`;
+    window.location = `${url.pathname}${url.search}${url.hash}`;
   }
 }
 

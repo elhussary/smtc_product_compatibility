@@ -75,7 +75,7 @@ class SaleOrderLine(models.Model):
             parts = name.split("\n", 1)
             default_code = self.product_id.default_code
             if default_code:
-                ref_line = "Ref: %s/%s" % (default_code, brand_ref)
+                ref_line = "Ref: %s%s" % (brand_ref, default_code)
             else:
                 ref_line = "Brand Ref: %s" % brand_ref
             if len(parts) > 1:
@@ -98,7 +98,7 @@ class StockMove(models.Model):
             if brand_ref:
                 default_code = move.product_id.default_code
                 if default_code:
-                    ref_line = "Ref: %s/%s" % (default_code, brand_ref)
+                    ref_line = "Ref: %s%s" % (brand_ref, default_code)
                 else:
                     ref_line = "Brand Ref: %s" % brand_ref
                 move.description_picking = move.description_picking + "\n" + ref_line if move.description_picking else ref_line

@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="paperformat_picking_label_10x5" model="report.paperformat">
+        <field name="name">Product Label (10cm x 10cm)</field>
+        <field name="default" eval="False" />
+        <field name="format">custom</field>
+        <field name="page_width">100</field>
+        <field name="page_height">100</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">1</field>
+        <field name="margin_bottom">1</field>
+        <field name="margin_left">2</field>
+        <field name="margin_right">2</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_picking_custom_label" model="ir.actions.report">
+        <field name="name">Custom Label</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">smtc_product_compatibility.report_picking_label_document</field>
+        <field name="report_file">smtc_product_compatibility.report_picking_label_document</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking" />
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Custom Labels - %s' % object.name</field>
+        <field name="paperformat_id" ref="smtc_product_compatibility.paperformat_picking_label_10x5" />
+    </record>
+
+    <template id="report_picking_label_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="picking">
+                <t t-set="company" t-value="picking.company_id" />
+                <!-- Use move_ids (stock.move) instead of move_line_ids so labels print even on unreserved pickings -->
+                <t t-foreach="picking.move_ids" t-as="move">
+                    <t t-set="product" t-value="move.product_id" />
+                    <t t-set="qty_to_print" t-value="int(move.product_uom_qty)" />
+                    <t t-set="barcode"
+                        t-value="move.lot_ids[:1].name if move.lot_ids else (product.barcode or '')" />
+
+                    <!-- 1) Try brand from sale order line (user's actual selection) -->
+                    <t t-set="brand_ref_val" t-value="False" />
+                    <t t-set="brand_name_val" t-value="False" />
+                    <t t-if="move.sale_line_id">
+                        <t t-set="brand_info_sale" t-value="move.sale_line_id._get_brand_info_from_line()" />
+                        <t t-set="brand_ref_val" t-value="brand_info_sale[0]" />
+                        <t t-set="brand_name_val" t-value="brand_info_sale[1]" />
+                    </t>
+
+                    <!-- 2) Fallback: variant attribute match -->
+                    <t t-if="not brand_name_val">
+                        <t t-set="brand_info" t-value="product._get_brand_ref()" />
+                        <t t-set="brand_ref_val" t-value="brand_info[0]" />
+                        <t t-set="brand_name_val" t-value="brand_info[1]" />
+                    </t>
+
+                    <!-- 3) Last fallback: first compatible brand -->
+                    <t t-if="not brand_name_val">
+                        <t t-set="first_brand"
+                            t-value="product.product_tmpl_id.compatible_brand_ids[:1]" />
+                        <t t-if="first_brand">
+                            <t t-set="brand_ref_val" t-value="first_brand.reference" />
+                            <t t-set="brand_name_val" t-value="first_brand.name" />
+                        </t>
+                    </t>
+
+                    <t t-set="ref_display" t-value="product.default_code or ''" />
+                    <t t-if="brand_ref_val">
+                        <t t-set="ref_display" t-value="'%s%s' % (brand_ref_val, ref_display)" />
+                    </t>
+
+                    <t t-foreach="range(qty_to_print)" t-as="i">
+                        <t t-call="web.basic_layout">
+
+                            <style type="text/css">
+                                .page table, .page tr, .page td, .page th, .page tbody, .page thead
+                                {
+                                border: none !important;
+                                border-top: none !important;
+                                border-bottom: none !important;
+                                border-left: none !important;
+                                border-right: none !important;
+                                border-spacing: 0 !important;
+                                }
+                                .page, .article {
+                                border: none !important;
+                                outline: none !important;
+                                box-shadow: none !important;
+                                }
+                            </style>
+
+                            <div class="page"
+                                style="page-break-after: always; padding: 2mm; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: #1a1a1a; width: 96mm; height: 96mm; box-sizing: border-box; border: none !important;">
+
+                                <div
+                                    style="padding-bottom: 0; margin-bottom: 0; border: none !important;">
+
+                                    <table
+                                        style="width:100%; margin-bottom:0; border-collapse: collapse;">
+                                        <tr>
+                                            <td
+                                                style="vertical-align:middle; width:45%; padding-right: 2mm;">
+                                                <img t-if="company.logo"
+                                                    t-att-src="image_data_uri(company.logo)"
+                                                    style="max-height:14mm; max-width:100%; display:block;"
+                                                    alt="Logo" />
+                                            </td>
+
+                                            <td
+                                                style="vertical-align:top; text-align:right; width:55%; padding-left: 2mm;">
+                                                <div style="margin-bottom:0.5mm;">
+                                                    <span
+                                                        style="display:inline-block; border:1pt solid #333; border-radius:3px; padding:0 4px; font-size:7pt; font-weight:700; vertical-align:middle; margin-right:3px;">
+                                                        REF</span>
+                                                    <span style="font-size:9pt; font-weight:700;"
+                                                        t-esc="ref_display" />
+                                                </div>
+
+                                                <div style="margin-bottom:0.5mm;">
+                                                    <span
+                                                        style="display:inline-block; border:1pt solid #333; border-radius:3px; padding:0 4px; font-size:7pt; font-weight:700; vertical-align:middle; margin-right:3px;">
+                                                        LOT </span>
+                                                    <span
+                                                        style="font-size:9pt; font-weight:700; margin-right: 3px;">
+                                                        <t t-if="barcode" t-esc="barcode" />
+                                                        <t t-else="">—</t>
+                                                    </span>
+                                                </div>
+
+                                                <div style="margin-bottom:0.5mm;">
+                                                    <span
+                                                        style="font-size:9pt; font-weight:700; margin-right: 3px;">
+                                                        Qty:</span>
+                                                    <span
+                                                        style="font-size:9pt; font-weight:700; margin-right: 3px;">
+                                                        <t t-esc="qty_to_print" />
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <div
+                                        style="margin-bottom:0.5mm; line-height:1.2; font-size:9pt; font-weight:700; border: none !important;">
+                                        <t t-esc="product.display_name" />
+                                        <t t-if="brand_name_val">
+                                            <t t-esc="brand_name_val" />
+                                        </t>
+                                    </div>
+
+                                    <table style="width:100%; table-layout: fixed;">
+                                        <tr>
+                                            <td
+                                                style="vertical-align:top; text-align:left; font-size:6pt; line-height:1.2; width: 65%;">
+
+                                                <div class="o_smtc_medical_row"
+                                                    style="margin-bottom: 0.5mm; font-size: 10pt; color: #222; display: flex; align-items: center; gap: 6px;">
+
+                                                    <img src="/smtc_product_compatibility/static/src/imgs/Do_not_use_if_package_is_damaged2_01.png"
+                                                        style="width:14px; height:14px; object-fit:contain;" alt="Do not use if damaged" />
+
+                                                    <img src="/smtc_product_compatibility/static/src/imgs/single_use_symbol_01.png"
+                                                        style="width:14px; height:14px; object-fit:contain;" alt="Single use" />
+
+                                                    <img src="/smtc_product_compatibility/static/src/imgs/manufacturing_date_01.png"
+                                                        style="width:14px; height:14px; object-fit:contain;" alt="Manufacturing date" />
+
+                                                    <span style="font-size: 8pt;">
+                                                        <t
+                                                            t-out="picking.scheduled_date and picking.scheduled_date.strftime('%Y-%m-%d') or ''" />
+                                                    </span>
+
+                                                    <div
+                                                        style="display: flex; align-items: center; gap: 4px;">
+                                                        <img src="/smtc_product_compatibility/static/src/imgs/Consult_instructions_for_use_01.png"
+                                                            style="width:14px; height:14px; object-fit:contain;" alt="Consult instructions" />
+                                                        <span style="font-size: 7pt;">
+                                                            <t t-out="company.website" />
+                                                        </span>
+                                                    </div>
+
+                                                    <span
+                                                        style="font-weight: 700; font-size: 7pt; white-space: nowrap;">
+                                                        R<sub style="font-size: 7pt;">x</sub> Only</span>
+
+                                                </div>
+
+                                                <div
+                                                    style="font-weight:700; font-size:7pt; margin-top: 0;">
+                                                    <t t-if="company.name">
+                                                        <t t-esc="company.name" />
+                                                    </t>
+                                                </div>
+
+                                                <t t-if="company.street or company.city">
+                                                    <div style="color: #444; margin: 0 !important;">
+                                                        <t t-if="company.street">
+                                                            <t t-esc="company.street" />
+                                                        </t>
+                                                        <t t-if="company.city">, <t
+                                                                t-esc="company.city" /></t>
+                                                        <t t-if="company.state_id"> - <t
+                                                                t-esc="company.state_id.name" /></t>
+                                                    </div>
+                                                </t>
+
+                                                <t t-if="company.country_id or company.phone">
+                                                    <div style="color: #444; margin: 0 !important;">
+                                                        <t t-if="company.country_id">
+                                                            <t t-esc="company.country_id.name" />
+                                                        </t>
+                                                    </div>
+                                                </t>
+                                            </td>
+
+                                            <td
+                                                style="vertical-align:top; width:35%; text-align:right;">
+                                                <t t-set="qr_value"
+                                                    t-value="barcode or product.default_code or product.display_name" />
+                                                <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', qr_value, 200, 200)"
+                                                    style="width:24mm; height:24mm; max-width:100%; object-fit:contain; border:none;"
+                                                    alt="QR" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

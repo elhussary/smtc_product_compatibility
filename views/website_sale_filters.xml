@@ -10,13 +10,13 @@
                         <h6 class="mb-1">
                             <b>Brand</b>
                         </h6>
+
                         <select name="brand_id"
                             class="form-select form-select-sm compatibility_filter">
-                            <option value="">All Brands</option>
                             <t t-foreach="all_brands" t-as="brand">
                                 <option t-att-value="brand.id"
-                                    t-att-selected="'selected' if brand.id in selected_brand_ids else None">
-                                    <t t-esc="brand.name" />
+                                    t-att-selected="'selected' if (selected_brand_ids and brand.id in selected_brand_ids) or (not selected_brand_ids and brand_index == 0) else None">
+                                    <t t-out="brand.name" />
                                 </option>
                             </t>
                         </select>

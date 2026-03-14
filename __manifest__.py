@@ -11,6 +11,7 @@
         "views/website_sale_templates.xml",
         "views/website_sale_filters.xml",
         "views/product_label_templates.xml",
+        "views/stock_picking_label.xml",
     ],
     "assets": {
         "web.assets_frontend": [

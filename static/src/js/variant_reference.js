@@ -36,7 +36,7 @@ export class VariantReferenceUpdater extends Interaction {
         const defaultCode = result[0].default_code || "";
         let refText = "";
         if (defaultCode && brandRef) {
-          refText = defaultCode + " / " + brandRef;
+          refText = brandRef + defaultCode;
         } else if (defaultCode) {
           refText = defaultCode;
         } else if (brandRef) {
