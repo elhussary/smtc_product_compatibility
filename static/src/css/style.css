@@ -1,6 +1,6 @@
-/* li.variant_attribute[data-attribute-name="Brand"] {
+li.variant_attribute[data-attribute-name="Brand"] {
   display: none !important;
-} */
+}
 
 li.variant_attribute[data-attribute-name="Connection"] {
   display: none !important;

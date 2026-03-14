@@ -21,6 +21,8 @@
         <field name="model">product.connection</field>
         <field name="arch" type="xml">
             <list string="Connections" editable="bottom">
+                <field name="sequence" widget="handle" />
+
                 <field name="name" />
                 <field name="brand_id" />
             </list>
